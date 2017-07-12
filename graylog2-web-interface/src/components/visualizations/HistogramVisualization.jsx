@@ -121,7 +121,7 @@ const HistogramVisualization = React.createClass({
   },
 
   renderHistogram() {
-    const histogramDomNode = ReactDOM.findDOMNode(this);
+    const histogramDomNode = this._graph;
 
     this.histogram = dc.barChart(histogramDomNode);
     this.histogram
@@ -159,7 +159,7 @@ const HistogramVisualization = React.createClass({
   },
   render() {
     return (
-      <div id={`visualization-${this.props.id}`} className="histogram" />
+      <div ref={(c) => { this._graph = c; }} id={`visualization-${this.props.id}`} className="histogram" />
     );
   },
 });
