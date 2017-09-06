@@ -305,12 +305,12 @@ const QuickValuesVisualization = React.createClass({
     return <span dangerouslySetInnerHTML={{ __html: `${analysisInformation.join(',')}.` }} />;
   },
   render() {
-    const { limitHeight } = this.props;
+    const { config, horizontal, displayAnalysisInformation, height, id, displayAddToSearchButton, limitHeight } = this.props;
     let pieChartClassName;
     const pieChartStyle = {};
 
-    if (this.props.config.show_pie_chart) {
-      if (this.props.horizontal) {
+    if (config.show_pie_chart) {
+      if (horizontal) {
         pieChartClassName = 'col-md-4';
         pieChartStyle.textAlign = 'center';
       } else {
@@ -326,14 +326,14 @@ const QuickValuesVisualization = React.createClass({
      * Ensure we always render the data table when quickvalues config was created before introducing pie charts,
      * or when neither the data table or the pie chart are selected for rendering.
      */
-    if (this.props.config.show_data_table || !this.props.config.show_pie_chart) {
-      dataTableClassName = this.props.horizontal ? 'col-md-8' : 'col-md-12';
+    if (config.show_data_table || !config.show_pie_chart) {
+      dataTableClassName = horizontal ? 'col-md-8' : 'col-md-12';
     } else {
       dataTableClassName = 'hidden';
     }
 
     let pieChart;
-    if (this.props.displayAnalysisInformation) {
+    if (displayAnalysisInformation) {
       pieChart = (
         <Panel>
           <ListGroup fill>
@@ -366,7 +366,7 @@ const QuickValuesVisualization = React.createClass({
                       <th style={{ width: '60%' }}>Value</th>
                       <th>%</th>
                       <th>Count</th>
-                      {this.props.displayAddToSearchButton &&
+                      {displayAddToSearchButton &&
                       <th style={{ width: 30 }}>&nbsp;</th>
                       }
                     </tr>
