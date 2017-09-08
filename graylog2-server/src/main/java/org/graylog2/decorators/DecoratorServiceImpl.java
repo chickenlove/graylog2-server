@@ -17,7 +17,9 @@
 package org.graylog2.decorators;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import com.mongodb.DBCollection;
+import org.bson.types.ObjectId;
 import org.graylog2.bindings.providers.MongoJackObjectMapperProvider;
 import org.graylog2.database.CollectionName;
 import org.graylog2.database.MongoConnection;
@@ -29,18 +31,17 @@ import javax.inject.Inject;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
 public class DecoratorServiceImpl implements DecoratorService {
-    private final JacksonDBCollection<DecoratorImpl, String> coll;
+    private final JacksonDBCollection<DecoratorImpl, ObjectId> coll;
 
     @Inject
     public DecoratorServiceImpl(MongoConnection mongoConnection, MongoJackObjectMapperProvider mongoJackObjectMapperProvider) {
         final String collectionName = DecoratorImpl.class.getAnnotation(CollectionName.class).value();
         final DBCollection dbCollection = mongoConnection.getDatabase().getCollection(collectionName);
-        this.coll = JacksonDBCollection.wrap(dbCollection, DecoratorImpl.class, String.class, mongoJackObjectMapperProvider.get());
+        this.coll = JacksonDBCollection.wrap(dbCollection, DecoratorImpl.class, ObjectId.class, mongoJackObjectMapperProvider.get());
     }
 
     @Override
@@ -58,7 +59,8 @@ public class DecoratorServiceImpl implements DecoratorService {
 
     @Override
     public Decorator findById(String decoratorId) throws NotFoundException {
-        final Decorator result = coll.findOneById(decoratorId);
+        final ObjectId objectId = new ObjectId(decoratorId);
+        final Decorator result = coll.findOneById(objectId);
         if (result == null) {
             throw new NotFoundException("Decorator with id " + decoratorId + " not found.");
         }
@@ -85,18 +87,20 @@ public class DecoratorServiceImpl implements DecoratorService {
     public Decorator save(Decorator decorator) {
         checkArgument(decorator instanceof DecoratorImpl, "Argument must be an instance of DecoratorImpl, not %s", decorator.getClass());
         if (!Strings.isNullOrEmpty(decorator.id())) {
-            this.coll.updateById(decorator.id(), (DecoratorImpl)decorator);
-            return this.coll.findOneById(decorator.id());
+            final ObjectId id = new ObjectId(decorator.id());
+            this.coll.updateById(id, (DecoratorImpl)decorator);
+            return this.coll.findOneById(id);
         }
         return this.coll.save((DecoratorImpl) decorator).getSavedObject();
     }
 
     @Override
     public int delete(String id) {
-        return this.coll.removeById(id).getN();
+        final ObjectId objectId = new ObjectId(id);
+        return this.coll.removeById(objectId).getN();
     }
 
     private List<Decorator> toInterfaceList(List<DecoratorImpl> concreteList) {
-        return concreteList.stream().collect(Collectors.toList());
+        return ImmutableList.copyOf(concreteList);
     }
 }

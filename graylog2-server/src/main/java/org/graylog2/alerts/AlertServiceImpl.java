@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
+import org.bson.types.ObjectId;
 import org.graylog2.alarmcallbacks.AlarmCallbackHistory;
 import org.graylog2.alarmcallbacks.AlarmCallbackHistoryService;
 import org.graylog2.alerts.Alert.AlertState;
@@ -52,7 +53,7 @@ import java.util.stream.Collectors;
 import static com.google.common.base.Preconditions.checkArgument;
 
 public class AlertServiceImpl implements AlertService {
-    private final JacksonDBCollection<AlertImpl, String> coll;
+    private final JacksonDBCollection<AlertImpl, ObjectId> coll;
     private final AlertConditionFactory alertConditionFactory;
     private final AlarmCallbackHistoryService alarmCallbackHistoryService;
 
@@ -71,7 +72,7 @@ public class AlertServiceImpl implements AlertService {
             AlertImpl.FIELD_STREAM_ID, 1
         )));
 
-        this.coll = JacksonDBCollection.wrap(dbCollection, AlertImpl.class, String.class, mapperProvider.get());
+        this.coll = JacksonDBCollection.wrap(dbCollection, AlertImpl.class, ObjectId.class, mapperProvider.get());
     }
 
     @Override
@@ -267,14 +268,16 @@ public class AlertServiceImpl implements AlertService {
 
     @Override
     public Alert load(String alertId, String streamId) throws NotFoundException {
-        return this.coll.findOneById(alertId);
+        final ObjectId id = new ObjectId(alertId);
+        return this.coll.findOneById(id);
     }
 
     @Override
     public String save(Alert alert) throws ValidationException {
         checkArgument(alert instanceof AlertImpl, "Supplied argument must be of type " + AlertImpl.class + ", and not " + alert.getClass());
 
-        return this.coll.save((AlertImpl)alert).getSavedId();
+        final ObjectId savedId = coll.save((AlertImpl) alert).getSavedId();
+        return savedId.toHexString();
     }
 
     @Override

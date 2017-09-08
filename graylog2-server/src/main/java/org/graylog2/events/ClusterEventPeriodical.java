@@ -28,6 +28,7 @@ import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
 import com.mongodb.MongoException;
 import com.mongodb.WriteConcern;
+import org.bson.types.ObjectId;
 import org.graylog2.bindings.providers.MongoJackObjectMapperProvider;
 import org.graylog2.database.MongoConnection;
 import org.graylog2.plugin.periodical.Periodical;
@@ -51,7 +52,7 @@ public class ClusterEventPeriodical extends Periodical {
     @VisibleForTesting
     static final String COLLECTION_NAME = "cluster_events";
 
-    private final JacksonDBCollection<ClusterEvent, String> dbCollection;
+    private final JacksonDBCollection<ClusterEvent, ObjectId> dbCollection;
     private final NodeId nodeId;
     private final ObjectMapper objectMapper;
     private final EventBus serverEventBus;
@@ -64,11 +65,11 @@ public class ClusterEventPeriodical extends Periodical {
                                   final ChainingClassLoader chainingClassLoader,
                                   final EventBus serverEventBus,
                                   final ClusterEventBus clusterEventBus) {
-        this(JacksonDBCollection.wrap(prepareCollection(mongoConnection), ClusterEvent.class, String.class, mapperProvider.get()),
+        this(JacksonDBCollection.wrap(prepareCollection(mongoConnection), ClusterEvent.class, ObjectId.class, mapperProvider.get()),
                 nodeId, mapperProvider.get(), chainingClassLoader, serverEventBus, clusterEventBus);
     }
 
-    private ClusterEventPeriodical(final JacksonDBCollection<ClusterEvent, String> dbCollection,
+    private ClusterEventPeriodical(final JacksonDBCollection<ClusterEvent, ObjectId> dbCollection,
                            final NodeId nodeId,
                            final ObjectMapper objectMapper,
                            final ChainingClassLoader chainingClassLoader,
@@ -161,7 +162,8 @@ public class ClusterEventPeriodical extends Periodical {
                     LOG.debug("Invalid payload in cluster event: {}", clusterEvent);
                 }
 
-                updateConsumers(clusterEvent.id(), nodeId);
+                final ObjectId id = new ObjectId(clusterEvent.id());
+                updateConsumers(id, nodeId);
             }
         } catch (Exception e) {
             LOG.warn("Error while reading cluster events from MongoDB, retrying.", e);
@@ -179,7 +181,7 @@ public class ClusterEventPeriodical extends Periodical {
         final ClusterEvent clusterEvent = ClusterEvent.create(nodeId.toString(), className, event);
 
         try {
-            final String id = dbCollection.save(clusterEvent, WriteConcern.JOURNALED).getSavedId();
+            final ObjectId id = dbCollection.save(clusterEvent, WriteConcern.JOURNALED).getSavedId();
             LOG.debug("Published cluster event with ID <{}> and type <{}>", id, className);
         } catch (MongoException e) {
             LOG.error("Couldn't publish cluster event of type <" + className + ">", e);
@@ -195,7 +197,7 @@ public class ClusterEventPeriodical extends Periodical {
         return dbCollection.find(query).sort(DBSort.asc("timestamp"));
     }
 
-    private void updateConsumers(final String eventId, final NodeId nodeId) {
+    private void updateConsumers(final ObjectId eventId, final NodeId nodeId) {
         dbCollection.updateById(eventId, DBUpdate.addToSet("consumers", nodeId.toString()));
     }
 

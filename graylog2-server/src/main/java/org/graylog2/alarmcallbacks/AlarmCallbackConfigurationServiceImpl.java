@@ -37,14 +37,14 @@ import java.util.List;
 import java.util.Map;
 
 public class AlarmCallbackConfigurationServiceImpl implements AlarmCallbackConfigurationService {
-    private final JacksonDBCollection<AlarmCallbackConfigurationImpl, String> coll;
+    private final JacksonDBCollection<AlarmCallbackConfigurationImpl, ObjectId> coll;
 
     @Inject
     public AlarmCallbackConfigurationServiceImpl(MongoConnection mongoConnection,
                                                  MongoJackObjectMapperProvider mapperProvider) {
         final String collectionName = AlarmCallbackConfigurationImpl.class.getAnnotation(CollectionName.class).value();
         final DBCollection dbCollection = mongoConnection.getDatabase().getCollection(collectionName);
-        this.coll = JacksonDBCollection.wrap(dbCollection, AlarmCallbackConfigurationImpl.class, String.class, mapperProvider.get());
+        this.coll = JacksonDBCollection.wrap(dbCollection, AlarmCallbackConfigurationImpl.class, ObjectId.class, mapperProvider.get());
         dbCollection.createIndex(AlarmCallbackConfigurationImpl.FIELD_STREAM_ID);
     }
 
@@ -60,7 +60,8 @@ public class AlarmCallbackConfigurationServiceImpl implements AlarmCallbackConfi
 
     @Override
     public AlarmCallbackConfiguration load(String alarmCallbackId) {
-        return coll.findOneById(alarmCallbackId);
+        final ObjectId objectId = new ObjectId(alarmCallbackId);
+        return coll.findOneById(objectId);
     }
 
     @Override
@@ -91,12 +92,14 @@ public class AlarmCallbackConfigurationServiceImpl implements AlarmCallbackConfi
 
     @Override
     public String save(AlarmCallbackConfiguration model) throws ValidationException {
-        return coll.save(implOrFail(model)).getSavedId();
+        final ObjectId savedId = coll.save(implOrFail(model)).getSavedId();
+        return savedId.toHexString();
     }
 
     @Override
     public int destroy(AlarmCallbackConfiguration model) {
-        return coll.removeById(model.getId()).getN();
+        final ObjectId objectId = new ObjectId(model.getId());
+        return coll.removeById(objectId).getN();
     }
 
     private List<AlarmCallbackConfiguration> toAbstractListType(List<AlarmCallbackConfigurationImpl> callbacks) {
