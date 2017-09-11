@@ -6,16 +6,19 @@ import crossfilter from 'crossfilter';
 import dc from 'dc';
 import d3 from 'd3';
 import deepEqual from 'deep-equal';
-
 import $ from 'jquery';
-global.jQuery = $;
-require('bootstrap/js/tooltip');
 
 import D3Utils from 'util/D3Utils';
 import StringUtils from 'util/StringUtils';
 import NumberUtils from 'util/NumberUtils';
 
 import StoreProvider from 'injection/StoreProvider';
+
+import style from './QuickValuesVisualization.css';
+
+global.jQuery = $;
+require('bootstrap/js/tooltip');
+
 const SearchStore = StoreProvider.getStore('Search');
 
 const QuickValuesVisualization = React.createClass({
@@ -351,11 +354,11 @@ const QuickValuesVisualization = React.createClass({
     }
 
     return (
-      <div id={`visualization-${this.props.id}`} className="quickvalues-visualization"
+      <div id={`visualization-${id}`} className="quickvalues-visualization"
            style={limitHeight ? { height: height } : {}}>
         <div className="container-fluid">
           <div className="row" style={{ marginBottom: 0 }}>
-            <div className={pieChartClassName} style={pieChartStyle}>
+            <div className={`${pieChartClassName} ${style.pieChart}`} style={pieChartStyle}>
               {pieChart}
             </div>
             <div className={dataTableClassName}>
