@@ -157,7 +157,7 @@ const StackedGraphVisualization = React.createClass({
     this.props.config.series.forEach((seriesConfig) => {
       i++;
       const seriesName = `series${i}`;
-      newSeriesNames = newSeriesNames.set(seriesName, `${seriesConfig.statistical_function} ${seriesConfig.field}, "${seriesConfig.query}"`);
+      newSeriesNames = newSeriesNames.set(seriesName, `${seriesConfig.statistical_function} ${seriesConfig.field}, '${seriesConfig.query || '*'}'`);
     }, this);
 
     if (!Immutable.is(this.seriesNames, newSeriesNames)) {
@@ -195,7 +195,7 @@ const StackedGraphVisualization = React.createClass({
       i++;
       const seriesName = `series${i}`;
       this.series = this.series.push(seriesName);
-      this.seriesNames = this.seriesNames.set(seriesName, `${seriesConfig.statistical_function} ${seriesConfig.field}, "${seriesConfig.query}"`);
+      this.seriesNames = this.seriesNames.set(seriesName, `${seriesConfig.statistical_function} ${seriesConfig.field}, '${seriesConfig.query || '*'}'`);
       colours = colours.set(seriesName, colourPalette(seriesName));
     });
 
